@@ -1,0 +1,18 @@
+users (collection)
+│
+├── user_email@example.com (document)
+│   ├── email: "user_email@example.com"
+│   ├── emergencyContact
+│   │   ├── name: "John Doe"
+│   │   └── phone: "+1234567890"
+│   ├── medications (array)
+│   │   ├── 0
+│   │   │   ├── medicineName: "Medication A"
+│   │   │   ├── time: ["morning", "evening"]
+│   │   │   └── doses: 1
+│   │   ├── 1
+│   │   │   ├── medicineName: "Medication B"
+│   │   │   ├── time: ["afternoon"]
+│   │   │   └── doses: 2
+│   │   └── ...
+│   └── ...
