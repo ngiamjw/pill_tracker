@@ -6,7 +6,6 @@ import 'package:pill_tracker/services/firebase.dart';
 
 class InfoPage extends StatefulWidget {
   final String email;
-
   InfoPage({super.key, required this.email});
 
   @override
@@ -15,7 +14,12 @@ class InfoPage extends StatefulWidget {
 
 class _InfoPageState extends State<InfoPage> {
   List<Map<String, dynamic>> medications = [
-    {'time': null, 'doses': null, 'medicine': '', 'taken': false}
+    {
+      'time': null,
+      'doses': null,
+      'medicine': '',
+      'taken': {'value': false, 'date': DateTime.now()}
+    }
   ];
   String? emergencyContactName;
   String? emergencyContactPhone;
@@ -60,7 +64,7 @@ class _InfoPageState extends State<InfoPage> {
                           'time': null,
                           'doses': null,
                           'medicine': '',
-                          'taken': false
+                          'taken': {'value': false, 'date': DateTime.now()}
                         });
                       });
                     },

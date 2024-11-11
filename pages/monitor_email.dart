@@ -6,8 +6,8 @@ import 'package:pill_tracker/components/error_display.dart';
 import 'package:pill_tracker/components/my_button.dart';
 import 'package:pill_tracker/components/my_textfield.dart';
 import 'package:pill_tracker/pages/home_page.dart';
-import 'package:pill_tracker/pages/monitor_page.dart';
 import 'package:pill_tracker/services/firebase.dart';
+import 'package:pill_tracker/services/light_storage.dart';
 
 class MonitorEmailPage extends StatefulWidget {
   final String email;
@@ -26,18 +26,16 @@ class _MonitorEmailPageState extends State<MonitorEmailPage> {
   void send() {
     try {
       firestoreService.updateRequest(
-          email: emailcontroller.text, request_email: widget.email);
+          email: emailcontroller.text, requester_email: widget.email);
       firestoreService.addUser(email: widget.email, medications: []);
+
+      addUserToRequestedUsers(emailcontroller.text);
 
       firestoreService.updateRequestedUsers(
           email: widget.email, request_email: emailcontroller.text);
 
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-            builder: (context) => MonitorPage(
-                  email: widget.email,
-                  user_email: emailcontroller.text,
-                )),
+        MaterialPageRoute(builder: (context) => HomePage(email: widget.email)),
       );
     } catch (e) {
       displayErrorMessage(e.toString(), context);

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pill_tracker/pages/home_page.dart';
 import 'package:pill_tracker/pages/opening_screen.dart';
-import 'package:pill_tracker/pages/monitor_page.dart'; // Import MonitorPage
+import 'package:pill_tracker/services/light_storage.dart';
+// Import MonitorPage
 
 class CheckAccount extends StatelessWidget {
   final String email;
@@ -15,31 +16,18 @@ class CheckAccount extends StatelessWidget {
           await FirebaseFirestore.instance.collection('users').doc(email).get();
 
       if (docSnapshot.exists) {
-        // Check if 'medicines' field exists and is an array
-        List<dynamic> medicines = docSnapshot.get('medicines') ?? [];
-        List<dynamic> requested_users =
-            docSnapshot.get('requested_users') ?? [];
-
-        if (medicines.isEmpty) {
-          // Navigate to MonitorPage if medicines array is empty
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MonitorPage(
-                email: email,
-                user_email: requested_users[0],
-              ),
+        // Navigate to HomePage if medicines array is not empty
+        List<String> requestedUsers =
+            List<String>.from(docSnapshot.data()?['requested_users'] ?? []);
+        saveRequestedUsers(requestedUsers);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(
+              email: email,
             ),
-          );
-        } else {
-          // Navigate to HomePage if medicines array is not empty
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomePage(email: email),
-            ),
-          );
-        }
+          ),
+        );
       } else {
         // Navigate to OpeningScreen if the document does not exist
         Navigator.pushReplacement(

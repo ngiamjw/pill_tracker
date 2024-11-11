@@ -7,15 +7,12 @@ import 'package:pill_tracker/services/firebase.dart';
 class ProfilePage extends StatefulWidget {
   final String email;
   List<Map<String, dynamic>> medications;
-  String emergencyContactName;
-  String emergencyContactPhone;
 
-  ProfilePage(
-      {super.key,
-      required this.email,
-      required this.medications,
-      required this.emergencyContactName,
-      required this.emergencyContactPhone});
+  ProfilePage({
+    super.key,
+    required this.email,
+    required this.medications,
+  });
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -65,7 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           'time': null,
                           'doses': null,
                           'medicine': '',
-                          'taken': false
+                          'taken': {'value': false, 'date': DateTime.now()}
                         });
                       });
                     },
@@ -93,13 +90,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         med['doses'] != null &&
                         med['medicine'] != '');
 
-                // Check if emergency contact name and phone are not null or empty
-                bool isEmergencyContactValid =
-                    widget.emergencyContactName != "" &&
-                        widget.emergencyContactPhone != "";
-
                 // Final validation
-                if (areMedicationsValid && isEmergencyContactValid) {
+                if (areMedicationsValid) {
                   firestoreService.updateUser(
                     email: widget.email,
                     medications: widget.medications,
@@ -155,8 +147,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 MaterialPageRoute(
                     builder: (context) => SettingsPage(
                           email: widget.email,
-                          emergencyContactName: widget.emergencyContactName,
-                          emergencyContactPhone: widget.emergencyContactPhone,
                           medications: widget.medications,
                         )),
               );

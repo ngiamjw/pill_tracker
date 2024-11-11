@@ -4,6 +4,7 @@ import "package:flutter/material.dart";
 import "package:pill_tracker/auth/check_account.dart";
 import "package:pill_tracker/auth/login_or_register.dart";
 import "package:pill_tracker/pages/home_page.dart";
+import "package:pill_tracker/services/light_storage.dart";
 
 class AuthPage extends StatelessWidget {
   const AuthPage({
@@ -18,6 +19,7 @@ class AuthPage extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               final userEmail = snapshot.data?.email;
+              saveDataEmail(userEmail!);
               return CheckAccount(email: userEmail!);
             } else {
               return LoginOrRegister();

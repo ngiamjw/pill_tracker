@@ -8,27 +8,22 @@ import 'package:pill_tracker/components/my_display_container.dart';
 import 'package:pill_tracker/pages/home_page.dart';
 import 'package:pill_tracker/pages/profile.dart';
 import 'package:pill_tracker/services/firebase.dart';
+import 'package:pill_tracker/services/light_storage.dart';
 import 'package:pill_tracker/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 class SettingsPage extends StatefulWidget {
   final String email;
   List<Map<String, dynamic>> medications;
-  String emergencyContactName;
-  String emergencyContactPhone;
 
-  SettingsPage(
-      {super.key,
-      required this.email,
-      required this.emergencyContactName,
-      required this.emergencyContactPhone,
-      required this.medications});
+  SettingsPage({super.key, required this.email, required this.medications});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  TextEditingController monitorcontroller = TextEditingController();
   int currentIndex = 0;
   @override
   Widget build(BuildContext context) {
@@ -85,6 +80,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 onPressed: () {
                                   // Placeholder for logout action
                                   FirebaseAuth.instance.signOut();
+                                  clearAllData();
                                   Navigator.of(context).pushAndRemoveUntil(
                                     MaterialPageRoute(
                                         builder: (context) => AuthPage()),
@@ -98,7 +94,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         },
                       );
                     },
-                    child: Icon(Icons.logout, color: Colors.red))),
+                    child: Icon(Icons.logout,
+                        color: Theme.of(context).colorScheme.secondary))),
 
             SizedBox(
               height: 20,
@@ -123,6 +120,79 @@ class _SettingsPageState extends State<SettingsPage> {
               height: 20,
             ),
 
+            MyDisplayContainer(
+                left: Text(
+                  'Monitor Users',
+                  style: TextStyle(fontSize: 16),
+                ),
+                right: ElevatedButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Center(
+                              child: Text(
+                                'User Email',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                            ),
+                            content: TextField(
+                              controller: monitorcontroller,
+                              decoration: InputDecoration(
+                                hintText: 'Enter email',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 2),
+                              ),
+                            ),
+                            actions: [
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 8.0, bottom: 8.0),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      // Add button action here
+                                      firestoreService.updateRequestedUsers(
+                                          email: widget.email,
+                                          request_email:
+                                              monitorcontroller.text);
+                                      firestoreService.updateRequest(
+                                          email: monitorcontroller.text,
+                                          requester_email: widget.email);
+                                      addUserToRequestedUsers(
+                                          monitorcontroller.text);
+
+                                      Navigator.pop(context);
+                                      monitorcontroller.clear();
+                                    },
+                                    child: Text('Add'),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Icon(Icons.add,
+                        color: Theme.of(context).colorScheme.secondary))),
+
+            SizedBox(
+              height: 20,
+            ),
+
             StreamBuilder<DocumentSnapshot>(
               stream: firestoreService.getUserStream(widget.email),
               builder: (context, snapshot) {
@@ -142,7 +212,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         SizedBox(height: 10),
                         SizedBox(
-                          height: 300,
+                          height: 250,
                           width: 400,
                           child: ListView.builder(
                             shrinkWrap: true,
@@ -272,8 +342,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     builder: (context) => ProfilePage(
                           email: widget.email,
                           medications: widget.medications,
-                          emergencyContactName: widget.emergencyContactName,
-                          emergencyContactPhone: widget.emergencyContactPhone,
                         )),
               );
               break;
