@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pill_tracker/classes/global_variables.dart';
+import 'package:pill_tracker/components/first_box.dart';
+import 'package:pill_tracker/components/medicine_container.dart';
 import 'package:pill_tracker/components/my_display_container.dart';
 import 'package:pill_tracker/pages/profile.dart';
 import 'package:pill_tracker/pages/settings.dart';
@@ -99,6 +101,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: const Color.fromARGB(48, 224, 232, 255),
         actions: [
           Container(
             child: CircleAvatar(
@@ -114,201 +117,189 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-          stream: firestoreService.getUserStream(widget.email),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return Center(child: CircularProgressIndicator());
-            } else {
-              var userData = snapshot.data!.data() as Map<String, dynamic>;
-              List<dynamic> requested_users = [widget.email];
-              requested_users.addAll(userData['requested_users']);
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              const Color.fromARGB(47, 230, 236, 255), // Start color
+              Colors.grey.shade100, // End color
+            ],
+          ),
+        ),
+        child: StreamBuilder<DocumentSnapshot>(
+            stream: firestoreService.getUserStream(widget.email),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
+              } else {
+                var userData = snapshot.data!.data() as Map<String, dynamic>;
+                List<dynamic> requested_users = [widget.email];
+                requested_users.addAll(userData['requested_users']);
 
-              selectedEmail ??=
-                  requested_users.isNotEmpty ? requested_users[0] : null;
+                selectedEmail ??=
+                    requested_users.isNotEmpty ? requested_users[0] : null;
 
-              return Stack(
-                // Use a Stack here
-                children: [
-                  if (requested_users.isNotEmpty)
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: DropdownButton<String>(
-                          value: selectedEmail,
-                          items: requested_users
-                              .map<DropdownMenuItem<String>>((userEmail) {
-                            return DropdownMenuItem<String>(
-                              value: userEmail,
-                              child: Text(userEmail),
-                            );
-                          }).toList(),
-                          onChanged: (newEmail) {
-                            setState(() {
-                              selectedEmail = newEmail;
-                              print(selectedEmail);
-                            });
-                          },
-                        ),
-                      ),
-                    ]),
-                  if (selectedEmail != null)
-                    StreamBuilder<DocumentSnapshot>(
-                      stream: firestoreService.getUserStream(selectedEmail!),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          var userData =
-                              snapshot.data!.data() as Map<String, dynamic>;
-                          medications = (userData['medications'] as List)
-                              .map((item) => item as Map<String, dynamic>)
-                              .toList();
-
-                          resetMedicationStatus(medications, selectedEmail!);
-
-                          if (counterModel.containerColors.length !=
-                              medications.length) {
-                            _containerColors = List<Color>.filled(
-                              medications.length,
-                              Theme.of(context).colorScheme.onPrimaryContainer,
-                            );
-                            counterModel.containerColors = _containerColors;
-                          }
-
-                          var permissions =
-                              userData['permissions'] as List<dynamic>;
-
-                          int y = medications.fold<int>(
-                            0,
-                            (sum, med) =>
-                                sum +
-                                ((med['time'] == getTiming())
-                                    ? (med['doses'] as int)
-                                    : 0),
-                          );
-
-                          int x = calculateDoses(medications);
-
-                          if (permissions.contains(widget.email) ||
-                              widget.email == selectedEmail) {
-                            return Padding(
-                              padding: const EdgeInsets.all(25.0),
-                              child: Column(
-                                children: [
-                                  SizedBox(height: 40), // Add some space
-                                  Text(
-                                    getTiming(), // Call a function to get the current timing
-                                    style: TextStyle(fontSize: 24),
-                                  ),
-                                  const SizedBox(height: 25),
-
-                                  MyDisplayContainer(
-                                    left: Text("Doses Taken",
-                                        style: TextStyle(fontSize: 18)),
-                                    right: Text("${x}/${y}",
-                                        style: TextStyle(fontSize: 18)),
-                                  ),
-                                  const SizedBox(height: 25),
-                                  Expanded(
-                                    child: ListView.builder(
-                                      itemCount: medications.length,
-                                      itemBuilder: (context, index) {
-                                        var med = medications[index];
-                                        return med['time'].contains(
-                                                getTiming()) // Filter by timing
-                                            ? GestureDetector(
-                                                onTap: () => _changeColor(
-                                                    index,
-                                                    medications[index]['taken']
-                                                        ['value'],
-                                                    selectedEmail!),
-                                                child: AnimatedContainer(
-                                                  duration: Duration(
-                                                      milliseconds: 300),
-                                                  padding: EdgeInsets.all(16.0),
-                                                  decoration: BoxDecoration(
-                                                    color: medications[index]
-                                                            ['taken']['value']
-                                                        ? Theme.of(context)
-                                                            .colorScheme
-                                                            .onSecondaryContainer
-                                                        : Theme.of(context)
-                                                            .colorScheme
-                                                            .onPrimaryContainer,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .onPrimaryFixed,
-                                                        blurRadius: 4,
-                                                        offset: Offset(0,
-                                                            2), // changes position of shadow
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        med['medicine'],
-                                                        style: TextStyle(
-                                                            fontSize: 18),
-                                                      ),
-                                                      Text(
-                                                          med['doses']
-                                                              .toString(),
-                                                          style: TextStyle(
-                                                              fontSize: 18)),
-                                                    ],
-                                                  ),
-                                                ),
-                                              )
-                                            : SizedBox
-                                                .shrink(); // Hide if timing doesn't match
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          } else {
-                            return Center(
-                                child: Text(
-                                    "Please wait for user to allow request"));
-                          }
-                        } else {
-                          return Center(child: CircularProgressIndicator());
-                        }
-                      },
+                return ListView(
+                  // Use a Stack here
+                  children: [
+                    SizedBox(
+                      height: 25,
                     ),
-                ],
-              );
-            }
-          }),
+                    Center(
+                      child: Text(
+                        "Good ${getTiming()}", // Call a function to get the current timing
+                        style: TextStyle(fontSize: 24),
+                      ),
+                    ),
+                    if (requested_users.isNotEmpty)
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("currently viewing"),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: DropdownButton<String>(
+                                value: selectedEmail,
+                                items: requested_users
+                                    .map<DropdownMenuItem<String>>((userEmail) {
+                                  return DropdownMenuItem<String>(
+                                    value: userEmail,
+                                    child: Text(userEmail),
+                                  );
+                                }).toList(),
+                                onChanged: (newEmail) {
+                                  setState(() {
+                                    selectedEmail = newEmail;
+                                    print(selectedEmail);
+                                  });
+                                },
+                              ),
+                            ),
+                          ]),
+                    if (selectedEmail != null)
+                      StreamBuilder<DocumentSnapshot>(
+                        stream: firestoreService.getUserStream(selectedEmail!),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            var userData =
+                                snapshot.data!.data() as Map<String, dynamic>;
+                            medications = (userData['medications'] as List)
+                                .map((item) => item as Map<String, dynamic>)
+                                .toList();
+
+                            resetMedicationStatus(medications, selectedEmail!);
+
+                            if (counterModel.containerColors.length !=
+                                medications.length) {
+                              _containerColors = List<Color>.filled(
+                                medications.length,
+                                Theme.of(context)
+                                    .colorScheme
+                                    .onPrimaryContainer,
+                              );
+                              counterModel.containerColors = _containerColors;
+                            }
+
+                            var permissions =
+                                userData['permissions'] as List<dynamic>;
+
+                            int y = medications.fold<int>(
+                              0,
+                              (sum, med) =>
+                                  sum +
+                                  ((med['time'] == getTiming())
+                                      ? (med['doses'] as int)
+                                      : 0),
+                            );
+
+                            int x = calculateDoses(medications);
+
+                            if ((permissions.contains(widget.email) ||
+                                    widget.email == selectedEmail) &&
+                                medications.isNotEmpty) {
+                              return Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  children: [
+                                    FirstBox(x: x, y: y),
+                                    const SizedBox(height: 25),
+                                    SizedBox(
+                                      height: 200,
+                                      width: 400,
+                                      child: Expanded(
+                                        child: ListView.builder(
+                                          itemCount: medications.length,
+                                          physics:
+                                              NeverScrollableScrollPhysics(),
+                                          itemBuilder: (context, index) {
+                                            var med = medications[index];
+                                            return med['time'].contains(
+                                                    getTiming()) // Filter by timing
+                                                ? GestureDetector(
+                                                    onTap: () => _changeColor(
+                                                        index,
+                                                        medications[index]
+                                                            ['taken']['value'],
+                                                        selectedEmail!),
+                                                    child: MedicineContainer(
+                                                        amt: med['doses'],
+                                                        color:
+                                                            medications[index]
+                                                                    ['taken']
+                                                                ['value'],
+                                                        name: med['medicine']))
+                                                : SizedBox
+                                                    .shrink(); // Hide if timing doesn't match
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } else if (medications.isEmpty) {
+                              return Center(child: Text("No medication data"));
+                            } else {
+                              return Center(
+                                  child: Text(
+                                      "Please wait for user to allow request"));
+                            }
+                          } else {
+                            return Center(child: CircularProgressIndicator());
+                          }
+                        },
+                      ),
+                  ],
+                );
+              }
+            }),
+      ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         items: [
           BottomNavigationBarItem(
             icon: Icon(
-              Icons.settings,
+              Icons.settings_outlined,
               color: Theme.of(context).colorScheme.secondary,
+              size: 30,
             ),
             label: 'Settings',
           ),
           BottomNavigationBarItem(
             icon: Icon(
-              Icons.home,
-              color: Colors.blue.shade400,
+              Icons.home_outlined,
+              color: Colors.blue,
+              size: 30,
             ), // Highlight home
             label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(
-              Icons.person,
+              Icons.person_outline,
               color: Theme.of(context).colorScheme.secondary,
+              size: 30,
             ),
             label: 'Profile',
           ),

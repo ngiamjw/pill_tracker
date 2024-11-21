@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:pill_tracker/api/firebase_api.dart';
 import 'package:pill_tracker/auth/auth.dart';
 import 'package:pill_tracker/auth/login_or_register.dart';
 import 'package:pill_tracker/classes/global_variables.dart';
@@ -73,7 +72,6 @@ void showNotification() async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await FirebaseApi().initNotification();
   // await flutterLocalNotificationsPlugin
   //     .resolvePlatformSpecificImplementation<
   //         AndroidFlutterLocalNotificationsPlugin>()
